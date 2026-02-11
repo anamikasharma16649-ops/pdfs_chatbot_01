@@ -1,4 +1,5 @@
 let token = localStorage.getItem("token") || "";
+let currentChatId = null;
 
 // Toggle between Signup/Login
 function toggleAuth(form){
@@ -79,6 +80,18 @@ function logout(){
     document.getElementById("auth-container").style.display="block";
 }
 
+async function createNewChat() {
+    const res = await fetch("http://127.0.0.1:8000/chats", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    currentChatId = data.id; // 🔥 Important
+    document.getElementById("chat-window").innerHTML = ""; // purane messages clear
+    loadChats(); // sidebar update
+}
+
+
 // ------------------- SHOW APP -------------------
 function showApp(){
     document.getElementById("auth-container").style.display="none";
@@ -118,7 +131,10 @@ async function uploadPDFs(){
 // ------------------- ASK QUESTION -------------------
 async function askQuestion(){
     const question = document.getElementById("question-input").value;
-    if(!question) return;
+    if(!question || !currentChatId) {
+        alert("Please create or select a chat first!");
+        return;
+    }
 
     addChatMessage("user", question);
     document.getElementById("question-input").value = "";
@@ -133,11 +149,15 @@ async function askQuestion(){
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ question })
+            body: JSON.stringify({
+                question,
+                chat_id: currentChatId, // 🔥 Important
+                word_limit: 120
+            })
         });
         const data = await res.json();
         addChatMessage("bot", data.answer);
-        loadHistory();
+        loadChats(); // refresh sidebar chats
     } catch(e) {
         alert("Backend not reachable!");
         console.error(e);
@@ -162,32 +182,48 @@ function addChatMessage(sender, text){
     chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// ------------------- LOAD CHAT HISTORY -------------------
-async function loadHistory(){
+// ------------------- LOAD CHATS -------------------
+async function loadChats(){
     try {
-        const res = await fetch("http://127.0.0.1:8000/chat-history", {
+        const res = await fetch("http://127.0.0.1:8000/chats", {
             headers: { "Authorization": `Bearer ${token}` }
         });
-        const data = await res.json();
+        const chats = await res.json();
         const ul = document.getElementById("chat-history");
         ul.innerHTML = "";
-        data.forEach(chat => {
+        chats.forEach(chat => {
             const li = document.createElement("li");
-            // li.innerHTML = `<b>Q:</b> ${chat.question} → <b>A:</b> ${chat.answer}`; // HTML formatting
-            li.textContent = `Q: ${chat.question} → A: ${chat.answer}`;
+            li.textContent = chat.title || "New Chat";
+            li.onclick = () => openChat(chat.id); // select chat
             ul.appendChild(li);
         });
+        ul.style.display = "block";
     } catch(e) {
-        console.error("Failed to load chat history", e);
+        console.error("Failed to load chats", e);
     }
 }
+
+async function openChat(chatId){
+    currentChatId = chatId;
+    const res = await fetch(`http://127.0.0.1:8000/chats/${chatId}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+    const messages = await res.json();
+    const chatWindow = document.getElementById("chat-window");
+    chatWindow.innerHTML = "";
+
+    messages.forEach(m => {
+        addChatMessage(m.role === "user" ? "user" : "bot", m.content);
+    });
+}
+
+
 // ------------------- TOGGLE CHAT HISTORY -------------------
 function toggleHistory(){
     const ul = document.getElementById("chat-history");
-
     if (ul.style.display === "none" || ul.style.display === "") {
         ul.style.display = "block";
-        loadHistory();   // history tabhi load hogi jab user click kare
+        loadChats();   // ✅ update
     } else {
         ul.style.display = "none";
     }
@@ -201,9 +237,10 @@ async function deleteHistory(){
             method: "DELETE",
             headers: { "Authorization": `Bearer ${token}` }
         });
-        loadHistory();
+        loadChats();  // ✅ updated
     } catch(e) {
         alert("Backend not reachable!");
         console.error(e);
     }
 }
+

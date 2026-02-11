@@ -71,7 +71,8 @@
             <!-- Sidebar Chat History -->
             <div class="history-section">
             <h2>Chat History</h2>
-            <button class="load-btn" onclick="toggleHistory()">Load History</button>
+            <button id="new-chat-btn" onclick="createNewChat()">+ New Chat</button>
+            <button class="load-btn" onclick="loadChats()">Load History</button>
             <ul id="chat-history" style="display:none;"></ul>
             <button class="delete-btn" onclick="deleteHistory()">Delete All</button>
    
