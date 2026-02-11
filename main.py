@@ -207,28 +207,30 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
 
     faiss_index = load_faiss_index(user.id)
     context_text = ""
-    results = []
 
     if faiss_index:
         results = faiss_index.similarity_search(
-        req.question,
-        top_k=TOP_K,
-    )
+            req.question,
+            top_k=TOP_K,
+        )
 
-    if results:
-        context_text = "\n\n".join([doc.page_content for doc in results])
-        context_text = context_text[:MAX_CONTEXT_CHARS]
+        if results:
+            context_text = "\n\n".join([doc.page_content for doc in results])
+            context_text = context_text[:MAX_CONTEXT_CHARS]
 
-    answer_raw = get_llm_response(
-        question=req.question,
-        context=context_text,
-        word_limit=req.word_limit
-    )
+    if not context_text.strip():
+        answer = "Sorry, the requested information is not available in the provided PDF."
+    else:
+        answer_raw = get_llm_response(
+            question=req.question,
+            context=context_text,
+            word_limit=req.word_limit
+        )
 
-    answer = format_text(answer_raw)
+        answer = format_text(answer_raw)
 
-    if req.word_limit:
-        answer = " ".join(answer.split()[:req.word_limit])
+        if req.word_limit:
+            answer = " ".join(answer.split()[:req.word_limit])
 
     insert_message(user.id, req.chat_id, "assistant", answer)
 
