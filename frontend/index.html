@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF Chatbot</title>
+<title>PDF Chatbot | AI Document Assistant</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -18,23 +18,48 @@
                 PDF Chatbot
             </h1>
 
+            <!-- SIGNUP -->
             <div id="signup-form">
                 <h2>Signup</h2>
-                <input type="email" id="signup-email" placeholder="Email">
-                <input type="password" id="signup-password" placeholder="Password">
-                <button onclick="signup()">Signup</button>
-                <p>Already have an account? <span onclick="toggleAuth('login')">Login</span></p>
+
+                <label>Email</label>
+                <input type="email" id="signup-email"
+                       placeholder="Enter your email"
+                       autocomplete="email">
+
+                <label>Password</label>
+                <input type="password" id="signup-password"
+                       placeholder="Create password"
+                       autocomplete="new-password">
+
+                <button type="button" onclick="signup()">Signup</button>
+                <p>Already have an account?
+                    <span onclick="toggleAuth('login')">Login</span>
+                </p>
             </div>
 
+            <!-- LOGIN -->
             <div id="login-form" style="display:none">
                 <h2>Login</h2>
-                <input type="email" id="login-email" placeholder="Email">
-                <input type="password" id="login-password" placeholder="Password">
+
+                <label>Email</label>
+                <input type="email" id="login-email"
+                       placeholder="Enter your email"
+                       autocomplete="email">
+
+                <label>Password</label>
+                <input type="password" id="login-password"
+                       placeholder="Enter password"
+                       autocomplete="current-password">
+
                 <small class="hint-text">
                     Password must be at least 6 characters
                 </small>
-                <button onclick="login()">Login</button>
-                <p>Don't have an account? <span onclick="toggleAuth('signup')">Signup</span></p>
+
+                <button type="button" onclick="login()">Login</button>
+                <p>Don't have an account?
+                    <span onclick="toggleAuth('signup')">Signup</span>
+                </p>
             </div>
 
             <p id="auth-message" class="message-text"></p>
@@ -45,7 +70,7 @@
     <div id="app-container" style="display:none">
         <div class="header">
             <h1 class="logo-title">📘 PDF Chatbot</h1>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <button type="button" class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
         <div class="main">
@@ -54,28 +79,30 @@
                 <div id="chat-window"></div>
 
                 <div class="message-input">
-                    <input type="text" id="question-input" placeholder="Type your question..." 
+                    <input type="text"
+                           id="question-input"
+                           placeholder="Type your question..."
                            onkeydown="if(event.key==='Enter'){askQuestion()}">
-                    <button id="send-btn" onclick="askQuestion()">Send</button>
+
+                    <button type="button" id="send-btn" onclick="askQuestion()">Send</button>
                     <span id="send-spinner" style="display:none;">⏳ Sending...</span>
                 </div>
 
                 <div class="pdf-upload">
                     <input type="file" id="pdf-files" multiple>
-                    <button id="upload-btn" onclick="uploadPDFs()">Upload PDFs</button>
+                    <button type="button" id="upload-btn" onclick="uploadPDFs()">Upload PDFs</button>
                     <span id="upload-spinner" style="display:none;">⏳ Uploading...</span>
                     <p id="upload-message"></p>
                 </div>
             </div>
 
-            <!-- Sidebar Chat History -->
+            <!-- Sidebar -->
             <div class="history-section">
-            <h2>Chat History</h2>
-            <button id="new-chat-btn" onclick="createNewChat()">+ New Chat</button>
-            <button class="load-btn" onclick="loadChats()">Load History</button>
-            <ul id="chat-history" style="display:none;"></ul>
-            <button class="delete-btn" onclick="deleteHistory()">Delete All</button>
-   
+                <h2>Chat History</h2>
+                <button type="button" id="new-chat-btn" onclick="createNewChat()">+ New Chat</button>
+                <button type="button" class="load-btn" onclick="loadChats()">Load History</button>
+                <ul id="chat-history" style="display:none;"></ul>
+                <button type="button" class="delete-btn" onclick="deleteHistory()">Delete All</button>
             </div>
         </div>
     </div>
