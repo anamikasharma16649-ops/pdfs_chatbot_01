@@ -56,3 +56,6 @@ def get_chat_messages(chat_id, user_id):
         .order("created_at") \
         .execute().data
 
+def delete_user_chats(user_id):
+    supabase_anon.table("messages").delete().eq("user_id", user_id).execute()
+    supabase_anon.table("chats").delete().eq("user_id", user_id).execute()

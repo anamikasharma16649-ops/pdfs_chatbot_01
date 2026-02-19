@@ -17,7 +17,8 @@ from app.crud import (
     set_chat_title,
     insert_message,
     get_user_chats,
-    get_chat_messages
+    get_chat_messages,
+    delete_user_chats
 )
 from app.pdf_reader import load_pdf
 from app.text_splitter import split_text
@@ -249,6 +250,12 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
         "answer": answer,
         "used_pdf_context": used_pdf
     }
+
+@app.delete("/delete-chat-history")
+def delete_chat_history(user=Depends(get_current_user)):
+    from app.crud import delete_user_chats
+    delete_user_chats(user.id)
+    return {"message": "All chats deleted"}
 
 
 @app.get("/health")

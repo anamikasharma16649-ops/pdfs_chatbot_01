@@ -209,8 +209,14 @@ async function loadChats(){
 
         chats.forEach(chat => {
             const li = document.createElement("li");
-            li.textContent = chat.title || "New Chat";
-            li.onclick = () => openChat(chat.id);
+            li.className = "history-item";
+
+            const span = document.createElement("span");
+            span.className = "history-title";
+            span.textContent = chat.title || "New Chat";
+            span.onclick = () => openChat(chat.id);
+
+            li.appendChild(span);
             ul.appendChild(li);
         });
 
@@ -224,6 +230,19 @@ async function loadChats(){
 /* ---------------- OPEN CHAT ---------------- */
 async function openChat(chatId){
     currentChatId = chatId;
+
+    // Active highlight
+    document.querySelectorAll(".history-item").forEach(item =>
+        item.classList.remove("active")
+    );
+
+    const activeItem = document.querySelector(
+        `.history-item span[onclick*="${chatId}"]`
+    );
+
+    if (activeItem) {
+        activeItem.parentElement.classList.add("active");
+    }
 
     const res = await fetch(`${API_BASE}/chats/${chatId}`, {
         headers: { "Authorization": `Bearer ${token}` }
