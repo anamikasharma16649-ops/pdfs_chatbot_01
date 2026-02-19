@@ -212,9 +212,13 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
     if faiss_index:
         results = faiss_index.similarity_search(
             req.question,
-            top_k=TOP_K,
+            k=TOP_K,
         )
-
+# #################################
+        print("---- Retrieved Chunks ----")
+        for doc in results:
+            print(doc.page_content[:300])
+#################################################    
         if results:
             context_text = "\n\n".join([doc.page_content for doc in results])
             context_text = context_text[:MAX_CONTEXT_CHARS]
