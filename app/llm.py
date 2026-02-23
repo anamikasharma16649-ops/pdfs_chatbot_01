@@ -33,7 +33,6 @@ Context:
 """.strip()
 
     result = llm_chain.invoke({
-        "chat_history": "",
         "input_text": input_text
     })
 

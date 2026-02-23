@@ -27,7 +27,7 @@ from app.faiss_db import (
     load_faiss_index,
 
 )
-from app.llm import get_llm_response
+from app.llm import get_llm_response, memory
 from app.formatter import format_text
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -205,6 +205,16 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
     if not req.chat_id:
         raise HTTPException(status_code=400, detail="chat_id required")
     insert_message(user.id, req.chat_id, "user", req.question)
+
+    memory.clear()
+
+    previous_messages = get_chat_messages(req.chat_id, user.id)
+
+    for msg in previous_messages:
+        if msg["role"] == "user":
+            memory.chat_memory.add_user_message(msg["content"])
+        elif msg["role"] == "assistant":
+            memory.chat_memory.add_ai_message(msg["content"])
 
     faiss_index = load_faiss_index(user.id)
     context_text = ""
