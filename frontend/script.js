@@ -168,8 +168,7 @@ async function askQuestion(){
             },
             body: JSON.stringify({
                 question,
-                chat_id: currentChatId,
-                word_limit: 1000
+                chat_id: currentChatId
             })
         });
 
@@ -191,7 +190,11 @@ function addChatMessage(sender, text){
     const msgDiv = document.createElement("div");
     msgDiv.className = `message ${sender}`;
 
-    msgDiv.textContent = text;
+    if (sender === "bot") {
+        msgDiv.innerHTML = text;
+    } else {
+        msgDiv.textContent = text;
+    }
 
     chatWindow.appendChild(msgDiv);
     chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -215,6 +218,7 @@ async function loadChats(){
             const span = document.createElement("span");
             span.className = "history-title";
             span.textContent = chat.title || "New Chat";
+            span.dataset.chatId = chat.id;
             span.onclick = () => openChat(chat.id);
 
             li.appendChild(span);
@@ -237,12 +241,12 @@ async function openChat(chatId){
         item.classList.remove("active")
     );
 
-    const activeItem = document.querySelector(
-        `.history-item span[onclick*="${chatId}"]`
+    const activeSpan = document.querySelector(
+    `.history-title[data-chat-id="${chatId}"]`
     );
 
-    if (activeItem) {
-        activeItem.parentElement.classList.add("active");
+    if (activeSpan) {
+        activeSpan.parentElement.classList.add("active");
     }
 
     const res = await fetch(`${API_BASE}/chats/${chatId}`, {

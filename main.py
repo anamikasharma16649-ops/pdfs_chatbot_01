@@ -8,7 +8,7 @@ from app.schemas import AuthRequest, QuestionRequest
 from app.database import supabase_anon
 from app.config import (
     UPLOAD_DIR, CHUNK_SIZE, CHUNK_OVERLAP, TOP_K,
-    MAX_FILE_SIZE_MB, MAX_CONTEXT_CHARS
+    MAX_FILE_SIZE_MB, MAX_CONTEXT_CHARS, SIMILARITY_THRESHOLD
 )
 from app.auth import get_current_user
 from app.crud import (
@@ -220,10 +220,17 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
     context_text = ""
 
     if faiss_index:
-        results = faiss_index.similarity_search(
+        results = faiss_index.similarity_search_with_score(
             req.question,
             k=TOP_K,
         )
+        filtered_results = []
+
+        for doc, score in results:
+            if score <= SIMILARITY_THRESHOLD:  # smaller score = better match
+                filtered_results.append(doc)
+
+        results = filtered_results
 # #################################
         print("---- Retrieved Chunks ----")
         for doc in results:
@@ -238,14 +245,10 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
     else:
         answer_raw = get_llm_response(
             question=req.question,
-            context=context_text,
-            word_limit=req.word_limit
+            context=context_text
         )
 
         answer = format_text(answer_raw)
-
-        if req.word_limit:
-            answer = " ".join(answer.split()[:req.word_limit])
 
     insert_message(user.id, req.chat_id, "assistant", answer)
 

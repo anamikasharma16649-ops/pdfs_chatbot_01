@@ -61,6 +61,12 @@ CONTEXT USAGE RULES:
 - If the Context contains a definition, explanation, list, steps, advantages, or rules, include them completely.
 - Do NOT omit any listed item.
 
+WORD LIMIT RULE:
+- If the question specifies a word limit (e.g., "in 50 words"),
+  you MUST answer in EXACTLY that number of words.
+- Do NOT exceed or reduce the word count.
+- The word count applies to visible text only. Do NOT count HTML tags.
+
 CONVERSATION RULES:
 - Use conversation history ONLY to resolve references like:
   "it", "they", "this", "that topic".
