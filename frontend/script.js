@@ -69,8 +69,10 @@ async function login() {
             localStorage.setItem("token", token);
             msg.innerText = "";
             showApp();
+            loadChats();
         } else {
-            msg.innerText = data.detail || "Something went wrong!";
+            msg.className = "message-text error";
+            msg.innerText = data.detail || "Invalid credentials!";
         }
 
     } catch (e) {
@@ -83,7 +85,8 @@ async function login() {
 
 /* ---------------- LOGOUT ---------------- */
 function logout(){
-    token="";
+    token = "";
+    currentChatId = null;
     localStorage.removeItem("token");
     document.getElementById("app-container").style.display="none";
     document.getElementById("auth-container").style.display="block";
@@ -129,7 +132,7 @@ async function uploadPDFs(){
         });
 
         const data = await res.json();
-        document.getElementById("upload-message").innerText =
+        document.getElementById("upload-message").innerText = 
             data.message || data.detail || "Upload completed.";
 
     } catch(e) {
@@ -144,7 +147,7 @@ async function uploadPDFs(){
 /* ---------------- ASK QUESTION ---------------- */
 async function askQuestion(){
     const question = document.getElementById("question-input").value;
-    if(!question) return;
+    if (!question.trim()) return;
 
     if (!currentChatId) {
         await createNewChat();
@@ -166,7 +169,7 @@ async function askQuestion(){
             body: JSON.stringify({
                 question,
                 chat_id: currentChatId,
-                word_limit: 120
+                word_limit: 1000
             })
         });
 
@@ -188,9 +191,7 @@ function addChatMessage(sender, text){
     const msgDiv = document.createElement("div");
     msgDiv.className = `message ${sender}`;
 
-    sender === "bot"
-        ? msgDiv.innerHTML = text
-        : msgDiv.innerText = text;
+    msgDiv.textContent = text;
 
     chatWindow.appendChild(msgDiv);
     chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -270,3 +271,11 @@ async function deleteHistory(){
         console.error(e);
     }
 }
+
+/* ---------------- AUTO LOGIN IF TOKEN EXISTS ---------------- */
+window.addEventListener("DOMContentLoaded", () => {
+    if (token) {
+        showApp();
+        loadChats();
+    }
+});
