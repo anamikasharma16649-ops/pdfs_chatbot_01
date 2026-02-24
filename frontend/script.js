@@ -65,6 +65,7 @@ async function login() {
         const data = await res.json();
 
         if (data.access_token) {
+            console.log("TOKEN RECEIVED:", data.access_token); // check token
             token = data.access_token;
             localStorage.setItem("token", token);
             msg.innerText = "";
@@ -277,9 +278,27 @@ async function deleteHistory(){
 }
 
 /* ---------------- AUTO LOGIN IF TOKEN EXISTS ---------------- */
-window.addEventListener("DOMContentLoaded", () => {
-    if (token) {
-        showApp();
-        loadChats();
+window.addEventListener("DOMContentLoaded", async () => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) return; // koi token nahi, signup/login dikhao
+
+    token = storedToken;
+
+    try {
+        // Check if token is valid by pinging backend
+        const res = await fetch(`${API_BASE}/chats`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.status === 401) {
+            // Invalid token → logout
+            logout();
+        } else {
+            // Valid token → show app
+            showApp();
+            loadChats();
+        }
+    } catch (e) {
+        // Backend unreachable → show login
+        logout();
     }
 });
