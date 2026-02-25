@@ -227,7 +227,7 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
         filtered_results = []
 
         for doc, score in results:
-            if score >= SIMILARITY_THRESHOLD:  # smaller score = better match
+            if score <= SIMILARITY_THRESHOLD:  # smaller score = better match
                 filtered_results.append(doc)
 
         results = filtered_results
