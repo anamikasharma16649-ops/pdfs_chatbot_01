@@ -40,4 +40,5 @@ def create_or_update_faiss(chunks_with_meta, user_id: str):
 
     
     save_faiss_index(index, user_id) 
+    print(f"FAISS index saved for user {user_id}, total chunks: {len(texts)}")
     return index

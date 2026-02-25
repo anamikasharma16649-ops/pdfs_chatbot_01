@@ -227,7 +227,7 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
         filtered_results = []
 
         for doc, score in results:
-            if score <= SIMILARITY_THRESHOLD:  # smaller score = better match
+            if score >= SIMILARITY_THRESHOLD:  # smaller score = better match
                 filtered_results.append(doc)
 
         results = filtered_results
@@ -236,9 +236,13 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
         for doc in results:
             print(doc.page_content[:300])
 #################################################    
-        if results:
-            context_text = "\n\n".join([doc.page_content for doc in results])
+        if filtered_results:  # use filtered_results instead of results
+            context_text = "\n\n".join([doc.page_content for doc in filtered_results])
             context_text = context_text[:MAX_CONTEXT_CHARS]
+
+            # 🔹 debug
+            print("---- Context sent to LLM ----")
+            print(context_text[:500])  # first 500 chars only
 
     if not context_text.strip():
         answer = "Sorry, the requested information is not available in the provided PDF."
