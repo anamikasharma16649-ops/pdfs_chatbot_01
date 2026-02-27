@@ -1,5 +1,24 @@
 const API_BASE = "http://127.0.0.1:8000";
 
+async function apiFetch(url, options = {}) {
+
+    options.headers = {
+        ...(options.headers || {}),
+        "Authorization": `Bearer ${token}`
+    };
+
+    const res = await fetch(url, options);
+
+    // ✅ SESSION EXPIRED HANDLE
+    if (res.status === 401) {
+        alert("Session expired. Please login again.");
+        logout();
+        throw new Error("Unauthorized");
+    }
+
+    return res;
+}
+
 let token = localStorage.getItem("token") || "";
 let currentChatId = null;
 
@@ -95,9 +114,8 @@ function logout(){
 
 /* ---------------- CREATE CHAT ---------------- */
 async function createNewChat() {
-    const res = await fetch(`${API_BASE}/chats`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}` }
+    const res = await apiFetch(`${API_BASE}/chats`, {
+    method: "POST"
     });
     const data = await res.json();
     currentChatId = data.id;
@@ -126,9 +144,8 @@ async function uploadPDFs(){
     spinner.style.display = "inline";
 
     try {
-        const res = await fetch(`${API_BASE}/upload-multiple`, {
+        const res = await apiFetch(`${API_BASE}/upload-multiple`, {
             method: "POST",
-            headers: { "Authorization": `Bearer ${token}` },
             body: formData
         });
 
@@ -161,11 +178,10 @@ async function askQuestion(){
     btn.disabled = true;
 
     try {
-        const res = await fetch(`${API_BASE}/ask`, {
+        const res = await apiFetch(`${API_BASE}/ask`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 question,
@@ -174,7 +190,13 @@ async function askQuestion(){
         });
 
         const data = await res.json();
-        addChatMessage("bot", data.answer || "No response received.");
+        let reply = data.answer || "No response received.";
+
+        if (data.sources && data.sources.length > 0) {
+            reply += "<br><br><b>Sources:</b><br>" + data.sources.join("<br>");
+        }
+
+        addChatMessage("bot", reply);
         loadChats();
 
     } catch(e) {
@@ -204,9 +226,7 @@ function addChatMessage(sender, text){
 /* ---------------- LOAD CHATS ---------------- */
 async function loadChats(){
     try {
-        const res = await fetch(`${API_BASE}/chats`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+        const res = await apiFetch(`${API_BASE}/chats`);
 
         const chats = await res.json();
         const ul = document.getElementById("chat-history");
@@ -250,9 +270,7 @@ async function openChat(chatId){
         activeSpan.parentElement.classList.add("active");
     }
 
-    const res = await fetch(`${API_BASE}/chats/${chatId}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-    });
+   const res = await apiFetch(`${API_BASE}/chats/${chatId}`);
 
     const messages = await res.json();
     const chatWindow = document.getElementById("chat-window");
@@ -266,10 +284,9 @@ async function openChat(chatId){
 /* ---------------- DELETE HISTORY ---------------- */
 async function deleteHistory(){
     try {
-        await fetch(`${API_BASE}/delete-chat-history`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+        await apiFetch(`${API_BASE}/delete-chat-history`, {
+            method: "DELETE"
+});
         loadChats();
     } catch(e) {
         alert("Backend not reachable!");

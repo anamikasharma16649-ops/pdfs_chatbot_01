@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 # Auth
 class AuthRequest(BaseModel):
@@ -12,4 +13,4 @@ class PDFUpload(BaseModel):
 # Ask question
 class QuestionRequest(BaseModel):
     question: str
-    chat_id: str 
+    chat_id: Optional[str] = None
