@@ -450,7 +450,7 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
         }
 
     # ---------------- BUILD CONTEXT ----------------
-    best_docs = filtered_results[:3]
+    best_docs = filtered_results[:TOP_K]
 
 # -------- CONTEXT --------
     context_text = "\n\n".join(
