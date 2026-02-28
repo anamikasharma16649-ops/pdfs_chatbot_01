@@ -55,9 +55,15 @@ def process_pdf_background(file_path, filename, user_id, access_token):
     chunks_with_meta = []
 
     # 2️⃣ Page-aware chunking
-    for page_num, page in enumerate(pages):
+    for page in pages:
 
         text = page.get("text", "").strip()
+        page_number = page.get("page")
+
+        # ✅ safety fallback
+        if page_number is None:
+            page_number = 0   # PyPDFLoader gives 0-index
+
         if not text:
             continue
 
@@ -72,7 +78,7 @@ def process_pdf_background(file_path, filename, user_id, access_token):
                 "text": chunk,
                 "metadata": {
                     "source": filename,
-                    "page": page_num + 1,
+                    "page": page_number + 1,  # human readable
                     "user_id": user_id
                 }
             })
@@ -89,7 +95,7 @@ def process_pdf_background(file_path, filename, user_id, access_token):
     insert_pdf(supabase, user_id, filename)
 
     print(f"✅ Indexed {len(chunks_with_meta)} chunks")
-
+    
 MAX_RETRIES = 3   #######
 RETRY_DELAY = 2     ########
 
@@ -444,15 +450,18 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
         }
 
     # ---------------- BUILD CONTEXT ----------------
-    
     best_docs = filtered_results[:3]
 
+# -------- CONTEXT --------
     context_text = "\n\n".join(
         doc.page_content for doc in best_docs
     )
+
+# -------- SOURCES (ONLY USED DOCS) --------
     sources = list({
-    f"{doc.metadata.get('source')} (Page {doc.metadata.get('page')})"
-    for doc in filtered_results
+        f"{doc.metadata.get('source','Unknown')} "
+        f"(Page {doc.metadata.get('page','?')})"
+        for doc in best_docs
     })
     context_text = context_text[:MAX_CONTEXT_CHARS]
 
