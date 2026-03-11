@@ -1,6 +1,3 @@
-# from app.database import supabase_anon
-
-# PDFs
 def insert_pdf(supabase, user_id, filename):
     return supabase.table("pdfs").insert({
         "user_id": user_id, 
@@ -46,7 +43,6 @@ def insert_message(supabase, user_id, chat_id, role, content):
         "content": content
     }).execute()
 
-# get chats list (sidebar)
 def get_user_chats(supabase):
     return (
         supabase.table("chats") 
@@ -56,7 +52,6 @@ def get_user_chats(supabase):
         .data
     )
 
-# get messages of one chat
 def get_chat_messages(supabase, chat_id):
     return (
         supabase.table("messages") \
@@ -68,12 +63,15 @@ def get_chat_messages(supabase, chat_id):
     )
 
 def delete_user_chats(supabase, user_id):
-    supabase.table("messages") \
-        .delete() \
-        .eq("user_id", user_id) \
-        .execute()
-
-    supabase.table("chats") \
-        .delete() \
-        .eq("user_id", user_id) \
-        .execute()
+    """Delete all chats for a user"""
+    # Get all chat IDs first
+    chats = supabase.table("chats").select("id").eq("user_id", user_id).execute()
+    
+    # Delete messages for each chat
+    for chat in chats.data:
+        supabase.table("messages").delete().eq("chat_id", chat["id"]).execute()
+    
+    # Delete all chats
+    supabase.table("chats").delete().eq("user_id", user_id).execute()
+    
+    return {"message": "All chats deleted"}

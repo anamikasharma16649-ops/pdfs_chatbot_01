@@ -3,117 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF Chatbot | AI Document Assistant</title>
+<title>PDF Chatbot</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-
 <div class="container">
-
-    <!-- AUTH CONTAINER -->
+    <!-- AUTH SECTION -->
     <div id="auth-container">
         <div class="auth-box">
             <h1 class="logo-title">
                 <img src="/static/logo.png" class="logo-img" />
                 PDF Chatbot
             </h1>
-
-            <!-- SIGNUP -->
+            <!-- SIGNUP FORM -->
             <div id="signup-form">
-                <h2>Signup</h2>
-
-                <label for="email">Email</label>
-                <input type="email" id="signup-email"
-                       placeholder="Enter your email"
-                       autocomplete="email">
-
-                <label for="password">Password</label>
-                <input type="password" id="signup-password"
-                       placeholder="Create password"
-                       autocomplete="new-password">
-
+                <h2>Create your account</h2>
+                <p class="sub-text">Start chatting with your documents using AI</p>
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" placeholder="Enter your email" autocomplete="email">
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" placeholder="Create password" autocomplete="new-password">
                 <button type="button" onclick="signup()">Signup</button>
-                <p>Already have an account?
-                    <span onclick="toggleAuth('login')">Login</span>
-                </p>
+                <p>Already have an account? <span onclick="toggleAuth('login')">Login</span></p>
             </div>
-
-            <!-- LOGIN -->
+            <!-- LOGIN FORM -->
             <div id="login-form" style="display:none">
-                <h2>Login</h2>
-
-            <label for="login-email">Email</label>
-            <input type="email" id="login-email"
-                placeholder="Enter your email"
-                autocomplete="email">
-
-            <label for="login-password">Password</label>
-            <input type="password" id="login-password"
-                placeholder="Enter password"
-                autocomplete="current-password">   
-
-                <small class="hint-text">
-                    Password must be at least 6 characters
-                </small>
-
+                <h2>Welcome back!</h2>
+                <p class="sub-text">Sign in to continue to PDF Chatbot</p>
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" placeholder="Enter your email" autocomplete="email">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password">   
+                <small class="hint-text">Password must be at least 6 characters long.</small>
                 <button type="button" onclick="login()">Login</button>
-                <p>Don't have an account?
-                    <span onclick="toggleAuth('signup')">Signup</span>
-                </p>
+                <p>Don't have an account? <span onclick="toggleAuth('signup')">Signup</span></p>
             </div>
-
             <p id="auth-message" class="message-text"></p>
         </div>
     </div>
 
-    <!-- MAIN APP -->
+    <!-- MAIN APP SECTION -->
     <div id="app-container" style="display:none">
+        <!-- HEADER -->
         <div class="header">
-            <h1 class="logo-title">
-                <img src="/static/logo.png" class="logo-img" />
-                PDF Chatbot</h1>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button type="button" class="menu-btn" onclick="toggleSidebar()">☰</button>
+                <h1 class="logo-title" style="margin:0; display:flex; align-items:center; font-size:20px;">
+                    <img src="/static/logo.png" class="logo-img" /> PDF Chatbot
+                </h1>
+            </div>
             <button type="button" class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
+        <!-- MAIN CONTENT -->
         <div class="main">
-            <!-- Chat Section -->
+            <!-- CHAT SECTION -->
             <div class="chat-section">
-                <div id="chat-window"></div>
-
+                <div id="chat-window">
+                    <div class="empty-chat">
+                        <h3>📄 Upload a PDF to start chatting</h3>
+                        <p>Ask questions and get instant AI answers from your document.</p>
+                    </div>
+                </div>
+                <!-- MESSAGE INPUT -->
                 <div class="message-input">
-                    <label for="question-input" class="visually-hidden">
-                        Ask Question
-                    </label>
-                    <input type="text"
-                           id="question-input"
-                           placeholder="Type your question..."
-                           onkeydown="if(event.key==='Enter'){askQuestion()}">
-
-                    <button type="button" id="send-btn" onclick="askQuestion()">Send</button>
-                    <span id="send-spinner" style="display:none;">⏳ Sending...</span>
-                </div>
-
-                <div class="pdf-upload">
-                    <input type="file" id="pdf-files" multiple>
-                    <button type="button" id="upload-btn" onclick="uploadPDFs()">Upload PDFs</button>
-                    <span id="upload-spinner" style="display:none;">⏳ Uploading...</span>
-                    <p id="upload-message"></p>
+                    <button class="upload-icon" onclick="document.getElementById('pdf-files').click()">📎</button>
+                    <input type="file" id="pdf-files" name="files" multiple accept="application/pdf" style="display:none;" onchange="if(this.files.length) uploadPDFs()">
+                    <div id="uploadStatus" style="display:none;"></div>
+                    <input type="text" id="question-input" class="chat-input" placeholder="Ask something about your PDF..." onkeydown="handleKey(event)">
+                    <button type="button" id="send-btn" class="send-btn" onclick="askQuestion()">Send</button>
                 </div>
             </div>
 
-            <!-- Sidebar -->
-            <div class="history-section">
-                <h2>Chat History</h2>
+                        <!-- SIDEBAR -->
+            <div class="history-section" id="sidebar">
+                <button class="close-sidebar" onclick="toggleSidebar()">×</button>
                 <button type="button" id="new-chat-btn" onclick="createNewChat()">+ New Chat</button>
-                <button type="button" class="load-btn" onclick="loadChats()">Load History</button>
-                <ul id="chat-history" style="display:none;"></ul>
-                <button type="button" class="delete-btn" onclick="deleteHistory()">Delete All</button>
+
+                <!-- YOUR CHATS SECTION (WITH PDFs INSIDE) -->
+                <div class="sidebar-section">
+                    <div class="section-header" onclick="toggleSection('chats')">
+                        <span>📁 Your Chats</span>
+                        <span class="toggle-icon" id="chats-icon">▼</span>
+                    </div>
+                    <div class="section-content" id="chats-section">
+                        <!-- Chats list -->
+                        <ul id="chat-history" class="chat-history-list"></ul>
+                        
+                        <!-- PDFs will be dynamically added here when chat selected -->
+                                                <!-- PDFs will be dynamically added here when chat selected -->
+                        <div id="chat-pdfs-container" style="display:none; margin-top:10px; max-height:200px; display:flex; flex-direction:column;">
+                            <div class="pdf-section-title">
+                                📄 PDFs in this chat
+                            </div>
+                            <ul id="chat-pdfs-list" class="pdf-history-list"></ul>
+                        </div>
+                        
+                        <!-- DELETE BUTTON - ALWAYS VISIBLE AT BOTTOM -->
+                        <button type="button" class="delete-chats-btn" onclick="deleteHistory()">
+                            🗑️ Delete All Chats
+                        </button>
+                    </div>
+                </div>
             </div>
+           
         </div>
     </div>
-
 </div>
-
 <script src="/static/script.js"></script>
 </body>
 </html>
