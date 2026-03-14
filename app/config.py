@@ -16,15 +16,27 @@ UPLOAD_DIR = os.path.join(BASE_DIR, "data", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(FAISS_PATH, exist_ok=True)
 
-CHUNK_SIZE = 1000
+
+CHUNK_SIZE = 700
 CHUNK_OVERLAP = 150
-TOP_K = 3
-SIMILARITY_THRESHOLD = 2
 TEMPERATURE = 0
+SIMILARITY_THRESHOLD = 0.7
+TOP_K = 5
 MAX_TOKENS = 3000
-MAX_CONTEXT_CHARS = 10000
+MAX_CONTEXT_CHARS = 20000
 MAX_PAGES = 500
 MAX_FILE_SIZE_MB = 50
 MIN_PAGES = 1
+
+def get_chunk_settings(page_count):
+
+    if page_count <= 100:
+        return 400, 100   # Chhoti PDF - accurate
+    elif page_count <= 200:
+        return 600, 150    # Medium PDF - balanced
+    elif page_count <= 300:
+        return 800, 200    # Badi PDF - faster
+    else:
+        return 1000, 250  
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

@@ -26,8 +26,14 @@ def load_pdf(file_path: str):
         for doc in docs:
             if doc.page_content:
                 clean_text = clean_pdf_text(doc.page_content)
+
+                page_num = doc.metadata.get("page")
+                if page_num is None:
+                    page_num = 0
+            
+                print(f"📄 Page {page_num + 1} extracted, length: {len(clean_text)} chars")
                 pages.append({
                     "text": clean_text,
-                    "page": doc.metadata.get("page", None)
+                    "page": page_num
                 })
         return pages

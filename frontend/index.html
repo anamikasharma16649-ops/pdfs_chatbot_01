@@ -8,14 +8,14 @@
 </head>
 <body>
 <div class="container">
-    <!-- AUTH SECTION -->
+  
     <div id="auth-container">
         <div class="auth-box">
             <h1 class="logo-title">
                 <img src="/static/logo.png" class="logo-img" />
                 PDF Chatbot
             </h1>
-            <!-- SIGNUP FORM -->
+           
             <div id="signup-form">
                 <h2>Create your account</h2>
                 <p class="sub-text">Start chatting with your documents using AI</p>
@@ -26,7 +26,7 @@
                 <button type="button" onclick="signup()">Signup</button>
                 <p>Already have an account? <span onclick="toggleAuth('login')">Login</span></p>
             </div>
-            <!-- LOGIN FORM -->
+           
             <div id="login-form" style="display:none">
                 <h2>Welcome back!</h2>
                 <p class="sub-text">Sign in to continue to PDF Chatbot</p>
@@ -41,10 +41,9 @@
             <p id="auth-message" class="message-text"></p>
         </div>
     </div>
-
-    <!-- MAIN APP SECTION -->
+                   
     <div id="app-container" style="display:none">
-        <!-- HEADER -->
+       
         <div class="header">
             <div style="display:flex; align-items:center; gap:15px;">
                 <button type="button" class="menu-btn" onclick="toggleSidebar()">☰</button>
@@ -55,9 +54,8 @@
             <button type="button" class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
-        <!-- MAIN CONTENT -->
         <div class="main">
-            <!-- CHAT SECTION -->
+
             <div class="chat-section">
                 <div id="chat-window">
                     <div class="empty-chat">
@@ -65,7 +63,7 @@
                         <p>Ask questions and get instant AI answers from your document.</p>
                     </div>
                 </div>
-                <!-- MESSAGE INPUT -->
+
                 <div class="message-input">
                     <button class="upload-icon" onclick="document.getElementById('pdf-files').click()">📎</button>
                     <input type="file" id="pdf-files" name="files" multiple accept="application/pdf" style="display:none;" onchange="if(this.files.length) uploadPDFs()">
@@ -75,23 +73,20 @@
                 </div>
             </div>
 
-                        <!-- SIDEBAR -->
+                       
             <div class="history-section" id="sidebar">
                 <button class="close-sidebar" onclick="toggleSidebar()">×</button>
                 <button type="button" id="new-chat-btn" onclick="createNewChat()">+ New Chat</button>
 
-                <!-- YOUR CHATS SECTION (WITH PDFs INSIDE) -->
                 <div class="sidebar-section">
                     <div class="section-header" onclick="toggleSection('chats')">
                         <span>📁 Your Chats</span>
                         <span class="toggle-icon" id="chats-icon">▼</span>
                     </div>
                     <div class="section-content" id="chats-section">
-                        <!-- Chats list -->
                         <ul id="chat-history" class="chat-history-list"></ul>
                         
-                        <!-- PDFs will be dynamically added here when chat selected -->
-                                                <!-- PDFs will be dynamically added here when chat selected -->
+                    
                         <div id="chat-pdfs-container" style="display:none; margin-top:10px; max-height:200px; display:flex; flex-direction:column;">
                             <div class="pdf-section-title">
                                 📄 PDFs in this chat
@@ -99,7 +94,6 @@
                             <ul id="chat-pdfs-list" class="pdf-history-list"></ul>
                         </div>
                         
-                        <!-- DELETE BUTTON - ALWAYS VISIBLE AT BOTTOM -->
                         <button type="button" class="delete-chats-btn" onclick="deleteHistory()">
                             🗑️ Delete All Chats
                         </button>

@@ -12,30 +12,48 @@ def get_pdfs(supabase):
         .data
     )
 
-
-# create new chat
 def create_chat(supabase, user_id):
+    import time
+    from datetime import datetime, timedelta
+    
+    # 🔥 CRITICAL FIX: Check for ANY recent chat (last 10 seconds)
+    ten_seconds_ago = (datetime.now() - timedelta(seconds=10)).isoformat()
+    
+    recent_chats = supabase.table("chats") \
+        .select("id, created_at") \
+        .eq("user_id", user_id) \
+        .gte("created_at", ten_seconds_ago) \
+        .order("created_at", desc=True) \
+        .execute()
+    
+    # If there's ANY recent chat, return it
+    if recent_chats.data and len(recent_chats.data) > 0:
+        print(f"⚠️ Returning existing chat {recent_chats.data[0]['id']} (created in last 10s)")
+        return recent_chats.data[0]
+    
+    # Create new chat only if no recent chats
+    current_time = datetime.now().isoformat()
     res = supabase.table("chats").insert({
-        "user_id": user_id
+        "user_id": user_id,
+        "created_at": current_time
     }).execute()
     
     if not res.data:
         raise Exception("Chat creation failed")
-
+    
+    print(f"✅ New chat created: {res.data[0]['id']}")
     return res.data[0]
+  
 
-
-# update title (first question)
 def set_chat_title(supabase, chat_id, title):
     return supabase.table("chats").update({
         "title": title
     }).eq("id", chat_id).execute()
 
-# insert message
 def insert_message(supabase, user_id, chat_id, role, content):
     if role not in ("user", "assistant"):
         raise ValueError("Invalid role. Must be 'user' or 'assistant'.")
-
+    
     return supabase.table("messages").insert({
         "user_id": user_id,
         "chat_id": chat_id,
@@ -64,14 +82,11 @@ def get_chat_messages(supabase, chat_id):
 
 def delete_user_chats(supabase, user_id):
     """Delete all chats for a user"""
-    # Get all chat IDs first
     chats = supabase.table("chats").select("id").eq("user_id", user_id).execute()
     
-    # Delete messages for each chat
     for chat in chats.data:
         supabase.table("messages").delete().eq("chat_id", chat["id"]).execute()
     
-    # Delete all chats
     supabase.table("chats").delete().eq("user_id", user_id).execute()
     
     return {"message": "All chats deleted"}
