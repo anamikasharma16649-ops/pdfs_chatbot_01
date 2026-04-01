@@ -31,11 +31,11 @@ MIN_PAGES = 1
 def get_chunk_settings(page_count):
 
     if page_count <= 100:
-        return 400, 100   # Chhoti PDF - accurate
+        return 400, 100   
     elif page_count <= 200:
-        return 600, 150    # Medium PDF - balanced
+        return 600, 150    
     elif page_count <= 300:
-        return 800, 200    # Badi PDF - faster
+        return 800, 200    
     else:
         return 1000, 250  
 
