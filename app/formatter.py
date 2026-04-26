@@ -31,21 +31,21 @@ def format_text(text: str) -> str:
             if not line:
                 continue
             
-            # 🔥 NUMBERED LISTS KO BULLETS MEIN BADLO
+
             numbered_match = re.match(r'^(\d+\.)\s*(.*)', line)
             if numbered_match:
                 num, content = numbered_match.groups()
-                # Sirf content lo, number hatao, bullet lagao
+
                 section_formatted.append(f"<br>• {content}")
                 continue
             
-            # Bullet points handle karo
+
             if line.startswith('- ') or line.startswith('• ') or line.startswith('* '):
                 content = re.sub(r'^[-•*]\s*', '', line)
                 section_formatted.append(f"• {content}")
                 continue
             
-            # Headings handle karo
+
             if line.endswith(':') and len(line.split()) <= 5:
                 clean = line.replace(":", "")
                 section_formatted.append(f"<br><b><u>{clean}</u></b>")
@@ -55,7 +55,7 @@ def format_text(text: str) -> str:
                 else:
                     section_formatted.append(f"<br><b><u>{line}</u></b>")
             else:
-                # Normal text
+                
                 if '**' in line:
                     line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line)
                 line = re.sub(r'<u>(.*?)</u>', r'\1', line)
@@ -65,7 +65,7 @@ def format_text(text: str) -> str:
     
     result = "<br><br>".join(formatted_sections)
     
-    # Clean up extra line breaks
+  
     result = re.sub(r'(<br>\s*){3,}', '<br><br>', result)
     result = re.sub(r'•\s+', '• ', result)
     

@@ -16,7 +16,7 @@ def create_chat(supabase, user_id):
     import time
     from datetime import datetime, timedelta
     
-    # 🔥 CRITICAL FIX: Check for ANY recent chat (last 10 seconds)
+
     ten_seconds_ago = (datetime.now() - timedelta(seconds=10)).isoformat()
     
     recent_chats = supabase.table("chats") \
@@ -26,12 +26,12 @@ def create_chat(supabase, user_id):
         .order("created_at", desc=True) \
         .execute()
     
-    # If there's ANY recent chat, return it
+
     if recent_chats.data and len(recent_chats.data) > 0:
         print(f"⚠️ Returning existing chat {recent_chats.data[0]['id']} (created in last 10s)")
         return recent_chats.data[0]
     
-    # Create new chat only if no recent chats
+
     current_time = datetime.now().isoformat()
     res = supabase.table("chats").insert({
         "user_id": user_id,

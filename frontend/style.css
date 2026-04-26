@@ -742,7 +742,7 @@ body {
     display: none !important;
 }
 
-/* ===== SMOOTH TRANSITIONS ===== */
+
 * {
     transition: background-color 0.2s ease, 
                 transform 0.2s ease, 
@@ -752,14 +752,14 @@ body {
                 color 0.2s ease;
 }
 
-/* ===== BUTTON HOVER ENHANCEMENTS ===== */
+
 button {
     cursor: pointer;
     position: relative;
     overflow: hidden;
 }
 
-/* Button ripple effect */
+
 button::after {
     content: '';
     position: absolute;
@@ -789,7 +789,7 @@ button:focus:not(:active)::after {
     }
 }
 
-/* ===== MESSAGE APPEAR ANIMATION ===== */
+
 .message {
     animation: slideIn 0.3s ease-out;
 }
@@ -805,7 +805,7 @@ button:focus:not(:active)::after {
     }
 }
 
-/* ===== TYPING INDICATOR ANIMATION ===== */
+
 .typing {
     display: flex;
     gap: 4px;
@@ -838,7 +838,7 @@ button:focus:not(:active)::after {
     }
 }
 
-/* ===== DELETE BUTTON HOVER EFFECT ===== */
+
 .delete-chat-btn {
     transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
@@ -847,7 +847,6 @@ button:focus:not(:active)::after {
     transform: scale(1.1);
 }
 
-/* ===== CHAT ITEM HOVER EFFECT ===== */
 .history-item {
     transition: background 0.2s ease, transform 0.2s ease, padding 0.2s ease;
 }
@@ -856,7 +855,7 @@ button:focus:not(:active)::after {
     transform: translateX(4px);
 }
 
-/* ===== PDF ITEM HOVER EFFECT ===== */
+
 .pdf-item {
     transition: all 0.2s ease;
 }
@@ -866,7 +865,6 @@ button:focus:not(:active)::after {
     border-color: #2563eb;
 }
 
-/* ===== UPLOAD BUTTON ANIMATION ===== */
 .upload-icon {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -875,7 +873,7 @@ button:focus:not(:active)::after {
     transform: rotate(90deg) scale(1.1);
 }
 
-/* ===== SEND BUTTON ANIMATION ===== */
+
 .send-btn {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -890,7 +888,7 @@ button:focus:not(:active)::after {
     transform: scale(0.95);
 }
 
-/* ===== NEW CHAT BUTTON ANIMATION ===== */
+
 #new-chat-btn {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -903,7 +901,7 @@ button:focus:not(:active)::after {
     transform: scale(0.98);
 }
 
-/* ===== DELETE ALL BUTTON ANIMATION ===== */
+
 .delete-chats-btn {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -916,7 +914,7 @@ button:focus:not(:active)::after {
     transform: scale(0.98);
 }
 
-/* ===== CLOSE SIDEBAR BUTTON ===== */
+
 .close-sidebar {
     transition: all 0.2s ease;
 }
@@ -925,7 +923,6 @@ button:focus:not(:active)::after {
     transform: rotate(90deg);
 }
 
-/* ===== MENU BUTTON ===== */
 .menu-btn {
     transition: all 0.2s ease;
 }
@@ -938,7 +935,7 @@ button:focus:not(:active)::after {
     transform: scale(0.95);
 }
 
-/* ===== LOGOUT BUTTON ===== */
+
 .logout-btn {
     transition: all 0.3s ease;
 }
@@ -951,7 +948,7 @@ button:focus:not(:active)::after {
     transform: scale(0.98);
 }
 
-/* ===== LOADING STATES ===== */
+
 .loading {
     position: relative;
     pointer-events: none;
@@ -976,7 +973,7 @@ button:focus:not(:active)::after {
     to { transform: rotate(360deg); }
 }
 
-/* ===== TOGGLE ICON ROTATION ===== */
+
 .toggle-icon {
     transition: transform 0.3s ease;
 }
@@ -985,37 +982,36 @@ button:focus:not(:active)::after {
     transform: rotate(180deg);
 }
 
-/* ===== FOCUS STATES ===== */
 button:focus-visible,
 input:focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
 }
 
-/* ===== DISABLED STATES ===== */
+
 button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     pointer-events: none;
 }
 
-/* ===== ACTIVE STATES ===== */
+
 button:active {
     transform: scale(0.98);
 }
 
-/* ===== PAGE TRANSITION ===== */
+
 #app-container,
 #auth-container {
     transition: opacity 0.3s ease;
 }
 
-/* ===== SIDEBAR SMOOTH OPEN/CLOSE ===== */
+
 .history-section {
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ===== UPLOAD MESSAGE STYLING ===== */
+
 .upload-message {
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
@@ -1046,7 +1042,7 @@ button:active {
         transform: translateY(0);
     }
 }
-/* ===== LOADING STATES FOR BUTTONS ===== */
+
 .btn-loading {
     position: relative;
     color: transparent !important;
@@ -1070,7 +1066,7 @@ button:active {
     to { transform: rotate(360deg); }
 }
 
-/* ===== PROFESSIONAL ANIMATIONS ===== */
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -1082,7 +1078,7 @@ button:active {
     100% { width: 20%; opacity: 0.8; }
 }
 
-/* Status bar styling */
+
 .message.bot div[style*="background: linear-gradient(135deg, #3b82f6"] {
     border-left: 4px solid #60a5fa;
 }

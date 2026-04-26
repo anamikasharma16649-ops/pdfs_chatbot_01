@@ -70,7 +70,7 @@ def create_or_update_faiss(chunks_with_meta, user_id: str, chat_id: str):
     try:
         print(f"📊 Creating FAISS with {len(chunks_with_meta)} chunks")
         
-        # 🔥 AGGRESSIVE DEDUPLICATION
+
         unique_chunks = []
         seen_texts = []
         
@@ -96,7 +96,6 @@ def create_or_update_faiss(chunks_with_meta, user_id: str, chat_id: str):
         texts = [c["text"] for c in unique_chunks]
         metas = [c["metadata"] for c in unique_chunks]
         
-        # 🔥 FIX: Pehle check karo index exist karta hai ya nahi
         existing_index = load_faiss_index(user_id, chat_id)
         
         if existing_index:
@@ -114,11 +113,10 @@ def create_or_update_faiss(chunks_with_meta, user_id: str, chat_id: str):
             save_faiss_index(index, user_id, chat_id)
             print("✅ New FAISS index created")
 
-        # Verify
         saved_index = load_faiss_index(user_id, chat_id)
         if saved_index:
             print(f"✅ Verification: FAISS index loaded successfully")
-            # Count unique sources
+
             all_docs = saved_index.similarity_search("", k=1000)
             sources = set([doc.metadata.get("source") for doc in all_docs if doc.metadata])
             print(f"📚 Total PDFs in index: {len(sources)}")

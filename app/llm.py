@@ -33,7 +33,7 @@ def clean_context(context: str) -> str:
     """Clean and deduplicate context"""
     context = re.sub(r'\n{3,}', '\n\n', context)
     
-    # Simple sentence deduplication
+    
     sentences = context.split('. ')
     unique_sentences = []
     seen = set()
@@ -54,10 +54,10 @@ def clean_answer(answer: str) -> str:
     
     for line in lines:
         line_clean = line.strip()
-        # Skip empty lines
+        
         if not line_clean:
             continue
-        # Skip duplicate lines
+        
         if line_clean not in seen_lines:
             seen_lines.add(line_clean)
             clean_lines.append(line)
@@ -65,7 +65,7 @@ def clean_answer(answer: str) -> str:
     return '\n'.join(clean_lines)
 
 def get_llm_response(question: str, context: str, memory) -> str:
-    # Clean context first
+    
     context = clean_context(context)
     
     context = re.sub(r'(\w)\n(\w)', r'\1 \2', context)
@@ -89,7 +89,7 @@ def get_llm_response(question: str, context: str, memory) -> str:
     print(answer)
     print("="*50)
 
-    # Remove duplicate lines
+    
     answer = clean_answer(answer)
 
     if word_limit:
