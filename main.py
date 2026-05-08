@@ -32,10 +32,7 @@ from app.faiss_db import (
 )
 from app.llm import get_llm_response, build_memory
 from app.formatter import format_text
-
 from fastapi.middleware.cors import CORSMiddleware
-
-# ========== PROCESSING STATUS TRACKING ==========
 from datetime import datetime
 import threading
 
@@ -46,9 +43,7 @@ app = FastAPI(title="PDF Chatbot")
 
 def process_pdf_background(file_path, filename, user_id, access_token, chat_id):
     status_key = f"{user_id}:{chat_id}"
-    
     try:
-        # Initialize status
         with status_lock:
             processing_status[status_key] = {
                 "status": "loading",
@@ -92,7 +87,6 @@ def process_pdf_background(file_path, filename, user_id, access_token, chat_id):
             processing_status[status_key]["total_pages"] = len(pages)
             processing_status[status_key]["message"] = f"Processing {len(pages)} pages..."
         
-        # 🔥 DEBUG: Pehle page ka content print karo
         if pages and len(pages) > 0:
             print(f"First page preview: {pages[0]['text'][:200]}...")
 
@@ -118,8 +112,8 @@ def process_pdf_background(file_path, filename, user_id, access_token, chat_id):
                 })
             print(f"   Created {len(page_chunks)} chunks from page {page_number + 1}")
             
-            # Update progress
-            progress = int((page_idx + 1) / total_pages * 40)  # 40% for splitting
+            
+            progress = int((page_idx + 1) / total_pages * 40)  
             with status_lock:
                 if status_key in processing_status:
                     processing_status[status_key]["progress"] = progress
@@ -150,9 +144,8 @@ def process_pdf_background(file_path, filename, user_id, access_token, chat_id):
             processing_status[status_key]["message"] = "Saving to database..."
 
         supabase = get_supabase_user_client(access_token)
-        insert_pdf(supabase, user_id, filename)
+        insert_pdf(supabase, user_id, filename, chat_id)
 
-        # Mark as complete
         with status_lock:
             processing_status[status_key] = {
                 "status": "completed",
@@ -274,7 +267,51 @@ async def upload_multiple_pdfs(
     print("UPLOAD CHAT ID:", final_chat_id)
     print("========================")
 
+    # uploaded_count = 0
+
+    # for file in files:
+    #     if file.content_type != "application/pdf":
+    #         continue
+    #     if not file.filename.lower().endswith(".pdf"):
+    #         continue
+
+    #     uploaded_count += 1
+
+    #     user_upload_dir = os.path.join(UPLOAD_DIR, f"user_{user['id']}")
+    #     os.makedirs(user_upload_dir, exist_ok=True)
+
+    #     file_path = os.path.join(
+    #         user_upload_dir,
+    #         f"{int(time.time())}_{file.filename}"
+    #     )
+
+    #     with open(file_path, "wb") as f:
+    #         while chunk := await file.read(1024 * 1024):
+    #             f.write(chunk)
+
+    #     if os.path.getsize(file_path) / (1024 * 1024) > MAX_FILE_SIZE_MB:
+    #         continue
+
+    #     background_tasks.add_task(
+    #         process_pdf_background,
+    #             file_path,
+    #             file.filename,
+    #             user["id"],
+    #             user["access_token"],
+    #             final_chat_id
+    #     )
+       
+    # if uploaded_count == 0:
+    #     raise HTTPException(status_code=400, detail="No valid PDFs uploaded")
+
+    # return {
+    #     "message": "Uploading started",
+    #     "uploaded_files": uploaded_count,
+    #     "chat_id": final_chat_id,
+    #     "status": "processing"
+    # }
     uploaded_count = 0
+    skipped_files = []  # 🔥 NAYA: Skipped files ka list
 
     for file in files:
         if file.content_type != "application/pdf":
@@ -296,8 +333,16 @@ async def upload_multiple_pdfs(
             while chunk := await file.read(1024 * 1024):
                 f.write(chunk)
 
-        if os.path.getsize(file_path) / (1024 * 1024) > MAX_FILE_SIZE_MB:
-            continue
+        # 🔥 FILE SIZE CHECK WITH TRACKING
+        file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+        if file_size_mb > MAX_FILE_SIZE_MB:
+            skipped_files.append({
+                "name": file.filename,
+                "size": round(file_size_mb, 1),
+                "limit": MAX_FILE_SIZE_MB
+            })
+            os.remove(file_path)  # Skip ki file ko delete karo
+            continue  # Skip this file
 
         background_tasks.add_task(
             process_pdf_background,
@@ -311,9 +356,11 @@ async def upload_multiple_pdfs(
     if uploaded_count == 0:
         raise HTTPException(status_code=400, detail="No valid PDFs uploaded")
 
+    # 🔥 RETURN SKIPPED FILES INFO
     return {
         "message": "Uploading started",
-        "uploaded_files": uploaded_count,
+        "uploaded_files": uploaded_count - len(skipped_files),
+        "skipped_files": skipped_files,  # 🔥 NAYA: Skipped files ka list
         "chat_id": final_chat_id,
         "status": "processing"
     }
@@ -337,11 +384,8 @@ def new_chat(user=Depends(get_current_user)):
 def list_chats(user=Depends(get_current_user)):
     supabase = get_supabase_user_client(user["access_token"])
     chats = get_user_chats(supabase)
-    
     chats.sort(key=lambda x: x.get('created_at', ''), reverse=True)
-    
     return chats
-
 
 @app.get("/chats/{chat_id}")
 def open_chat(chat_id: str, user=Depends(get_current_user)):
@@ -357,18 +401,16 @@ def get_processing_status(chat_id: str, user=Depends(get_current_user)):
         if status_key in processing_status:
             status = processing_status[status_key]
             
-            # Clean up old status entries (older than 5 minutes)
             if status.get("status") in ["completed", "failed"]:
                 try:
                     completed_time = datetime.fromisoformat(status.get("completed_time", "2000-01-01"))
-                    if (datetime.now() - completed_time).seconds > 300:  # 5 minutes
+                    if (datetime.now() - completed_time).seconds > 300:  
                         del processing_status[status_key]
                 except:
                     pass
             
             return status
-    
-    # Check if PDF exists in database
+
     supabase = get_supabase_user_client(user["access_token"])
     pdf_check = supabase.table("pdfs") \
         .select("filename") \
@@ -391,6 +433,26 @@ def estimate_remaining_time(status):
         return "5-10 seconds"
     else:
         return "a few seconds"
+
+
+
+        ######
+@app.get("/chats/{chat_id}/pdfs")
+def get_chat_pdfs(chat_id: str, user = Depends(get_current_user)):
+    """Get all PDFs for a specific chat"""
+    supabase = get_supabase_user_client(user["access_token"])
+    
+    pdfs = supabase.table("pdfs").select("filename, upload_date").eq("chat_id", chat_id).eq("user_id", user["id"]).execute()
+    
+    result = []
+    for pdf in pdfs.data:
+        result.append({
+            "filename": pdf["filename"],
+            "created_at": pdf.get("upload_date")
+        })
+    
+    return {"pdfs": result}
+######
 
 @app.post("/ask")
 def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
@@ -439,8 +501,6 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
             "chat_id": req.chat_id
         }
     insert_message(supabase, user["id"], req.chat_id, "user", req.question)
-
-
     follow_up_patterns = [
         "what about",
         "its",
@@ -496,13 +556,11 @@ def ask_question(req: QuestionRequest, user=Depends(get_current_user)):
     faiss_index = load_faiss_index(user["id"], req.chat_id)
 
     if not faiss_index:
-        # Check processing status first
         status_key = f"{user['id']}:{req.chat_id}"
         with status_lock:
             if status_key in processing_status:
                 status = processing_status[status_key]
                 if status["status"] == "processing":
-                    # Still processing - give user info
                     answer = f"""⏳ **Your PDF is being processed...**
 
 {status.get('message', 'Processing')}  
@@ -523,8 +581,6 @@ _You'll be notified when ready. Please wait..._"""
 Please try uploading again."""
                     insert_message(supabase, user["id"], req.chat_id, "assistant", answer)
                     return {"answer": answer, "used_pdf_context": False}
-        
-        # Check if PDF was uploaded but status unknown
         pdf_check = supabase.table("pdfs") \
             .select("filename, created_at") \
             .eq("user_id", user["id"]) \
@@ -542,41 +598,33 @@ Please wait a moment and try again."""
         insert_message(supabase, user["id"], req.chat_id, "assistant", answer)
         return {"answer": answer, "used_pdf_context": False}
 
-        # 🔥 IMPROVED RETRIEVAL - Zyada chunks lo
     results = faiss_index.similarity_search_with_score(
         req.question,
-        k=TOP_K * 3,  # 24 chunks retrieve karo
+        k=TOP_K * 3,  
     )
-
-    # Better filtering - strict mat raho
     filtered_docs = []
     for doc, score in results:
-        # Thoda lenient threshold
         if score <= SIMILARITY_THRESHOLD * 1.5:
             filtered_docs.append(doc)
 
-    # Agar kuch nahi mila to top results le lo
     if len(filtered_docs) < 3:
         print("⚠️ Taking top results regardless of score")
         filtered_docs = [doc for doc, score in results[:TOP_K]]
 
-    # Remove duplicates
     from difflib import SequenceMatcher
 
     def is_similar(text1, text2, threshold=0.7):
         """Check if two texts are similar (not just exact match)"""
-        # Short strings ko alag treat karo
         if len(text1) < 50 or len(text2) < 50:
             return text1 == text2
     
-        # SequenceMatcher se similarity check
         similarity = SequenceMatcher(None, text1[:200], text2[:200]).ratio()
         return similarity > threshold
 
     unique_docs = []
     for doc in filtered_docs:
         is_duplicate = False
-        current_text = doc.page_content[:200]  # Pehle 200 chars se compare
+        current_text = doc.page_content[:200] 
     
         for existing in unique_docs:
             existing_text = existing.page_content[:200]
@@ -591,8 +639,6 @@ Please wait a moment and try again."""
     print(f"📊 Similarity deduplication: {len(filtered_docs)} unique chunks")
 
     print(f"📚 Retrieved {len(filtered_docs)} unique chunks")
-
-    # filtered_docs = [doc for doc, score in results]
 
     for doc in filtered_docs:
         print(doc.page_content[:300])
@@ -617,20 +663,14 @@ Please wait a moment and try again."""
 
 
     best_docs = filtered_docs[:TOP_K]
-
-    # Sort by relevance score if available
     if hasattr(results[0], 'score'):
         best_docs = [doc for doc, score in sorted(results, key=lambda x: x[1])[:TOP_K]]
-
-    # Build context
     context_parts = []
     for doc in best_docs:
         if len(doc.page_content.strip()) > 40:
             context_parts.append(doc.page_content.strip())
 
     context_text = "\n\n".join(context_parts)
-
-    # If context too short, get more chunks
     if len(context_text) < 500 and len(filtered_docs) > TOP_K:
         print("⚠️ Context too short, getting more chunks...")
         best_docs = filtered_docs[:TOP_K + 2]  # 2 extra chunks
@@ -640,20 +680,15 @@ Please wait a moment and try again."""
                 context_parts.append(doc.page_content.strip())
         context_text = "\n\n".join(context_parts)
 
-    # Clean up whitespace
     import re
     context_text = re.sub(r'\s+', ' ', context_text)
-
-    # Limit context size
     context_text = context_text[:MAX_CONTEXT_CHARS]
 
-        # 🔥 FINAL CHECK: Ensure we have enough context
     if len(context_text) < 200:
         print("⚠️ Very little context found, expanding search...")
-        # Get more chunks
         more_results = faiss_index.similarity_search_with_score(
             req.question,
-            k=TOP_K * 5,  # 40 chunks
+            k=TOP_K * 5, 
         )
         for doc, score in more_results:
             if len(context_text) < 1000 and doc.page_content not in context_text:
@@ -732,7 +767,6 @@ Please wait a moment and try again."""
         while i < len(lines):
             line = lines[i].rstrip()
         
-            # Check if line starts with a number like "1.", "4.", etc.
             number_match = re.match(r'^(\d+)\.\s+(.*)', line)
         
             if number_match:
@@ -741,7 +775,6 @@ Please wait a moment and try again."""
             
                 fixed_lines.append(line)
             
-                # Look ahead to find next numbered line
                 next_num = None
                 next_num_line = None
                 j = i + 1
@@ -753,20 +786,16 @@ Please wait a moment and try again."""
                         break
                     j += 1
             
-                # Agar next number mila aur skip hai (1 ke baad 4)
                 if next_num and next_num > current_num + 1:
                 
-                    # Missing numbers ke liye generic names
                     for missing in range(current_num + 1, next_num):
-                    
-                        # Check karo kahin missing number already to nahi aaya bina number ke?
                         found_unumbered = False
                         for k in range(i + 1, next_num_line):
                             if lines[k].strip() and not re.match(r'^\d+\.', lines[k]):
                                 unnumbered_content = lines[k].strip()
                                 fixed_lines.append(f"{missing}. {unnumbered_content}")
                                 found_unumbered = True
-                                lines[k] = ""  # Mark as used
+                                lines[k] = ""  
                                 break
                     
                         if not found_unumbered:
@@ -776,7 +805,6 @@ Please wait a moment and try again."""
                     continue
             
             elif line.strip() and not re.match(r'^\d+\.', line):
-                # Yeh unnumbered line hai
                 last_number = None
                 for l in reversed(fixed_lines):
                     last_match = re.match(r'^(\d+)\.', l)
@@ -798,7 +826,6 @@ Please wait a moment and try again."""
         result_lines = [l for l in fixed_lines if l.strip()]
         return '\n'.join(result_lines)
 
-# 🔥 YEH LINE ADD KARO - numbering fix apply karo
     answer_clean = fix_numbering_generic(answer_clean)
 
     is_sorry = (
@@ -833,7 +860,7 @@ Please wait a moment and try again."""
                     if doc.metadata.get("source") == pdf
                 })
                 if len(pdf_pages) > 6:
-                    pdf_pages = pdf_pages[:6] + ["..."]  # Sirf 6 pages dikhao, baaki "..."
+                    pdf_pages = pdf_pages[:6] + ["..."]  
 
                 source_texts.append(f"{pdf} — Pages {', '.join(pdf_pages)}")
 

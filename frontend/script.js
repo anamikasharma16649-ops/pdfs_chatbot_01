@@ -1,4 +1,3 @@
-
 const API_BASE = "http://127.0.0.1:8000";
 let token = localStorage.getItem("token") || "";
 let currentChatId = null;
@@ -19,8 +18,6 @@ try {
 let chatsCache = null;
 let chatsCacheTime = null;
 const CACHE_DURATION = 5000; 
-
-
 async function apiFetch(url, options = {}) {
     if (!token) throw new Error("No auth token");
     options.headers = { ...(options.headers || {}), "Authorization": `Bearer ${token}` };
@@ -32,13 +29,10 @@ async function apiFetch(url, options = {}) {
     }
     return res;
 }
-
-
 function toggleAuth(form) {
     document.getElementById("signup-form").style.display = form === 'signup' ? 'block' : 'none';
     document.getElementById("login-form").style.display = form === 'login' ? 'block' : 'none';
 }
-
 async function signup() {
     const email = document.getElementById("signup-email").value;
     const password = document.getElementById("signup-password").value;
@@ -65,7 +59,6 @@ async function signup() {
         console.error(e);
     } finally { btn.disabled = false; }
 }
-
 async function login() {
     const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
@@ -108,10 +101,7 @@ function logout() {
     document.getElementById("app-container").style.display = "none";
     document.getElementById("auth-container").style.display = "flex";
 }
-
-
 let isCreatingChat = false; 
-
 async function createNewChat() {
     if (isCreatingChat) {
         console.log("Already creating a chat, please wait...");
@@ -164,7 +154,6 @@ async function createNewChat() {
         }, 3000);
     }
 }
- 
 async function loadChats(forceRefresh = false) {
     try {
         if (!forceRefresh && chatsCache && chatsCacheTime && (Date.now() - chatsCacheTime < CACHE_DURATION)) {
@@ -204,7 +193,6 @@ async function loadChats(forceRefresh = false) {
         console.error("Failed to load chats", e); 
     }
 }
-
 function renderChats(chats) {
     const ul = document.getElementById("chat-history");
     ul.innerHTML = "";
@@ -239,7 +227,6 @@ function renderChats(chats) {
     
     ul.style.display = "block";
 }
-
 function displayChatPDFs() {
     const container = document.getElementById('chat-pdfs-container');
     const pdfList = document.getElementById('chat-pdfs-list');
@@ -279,6 +266,34 @@ function displayChatPDFs() {
         
         pdfList.appendChild(li);
     });
+}
+
+
+async function loadChatPDFs(chatId) {
+    try {
+        const res = await apiFetch(`${API_BASE}/chats/${chatId}/pdfs`);
+        const data = await res.json();
+        
+        if (data.pdfs && data.pdfs.length > 0) {
+            if (!pdfDatabase[chatId]) pdfDatabase[chatId] = [];
+            
+            data.pdfs.forEach(pdf => {
+                // Check if already exists
+                const exists = pdfDatabase[chatId].some(p => p.name === pdf.filename);
+                if (!exists) {
+                    pdfDatabase[chatId].push({
+                        name: pdf.filename,
+                        uploadedAt: pdf.created_at || new Date().toISOString()
+                    });
+                }
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('pdfDatabase', JSON.stringify(pdfDatabase));
+        }
+    } catch (e) {
+        console.error("Failed to load PDFs for chat:", e);
+    }
 }
 
 async function openChat(chatId) {
@@ -326,6 +341,7 @@ async function openChat(chatId) {
         });
         
         chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: "smooth" });
+        await loadChatPDFs(chatId);
         displayChatPDFs();
         
     } catch (e) {
@@ -337,9 +353,6 @@ async function openChat(chatId) {
             </div>`;
     }
 }
-
-
-
 async function deleteSingleChat(chatId, event) {
     event.stopPropagation();
     
@@ -363,8 +376,6 @@ async function deleteSingleChat(chatId, event) {
                 <p>Ask questions and get instant AI answers from your document.</p>
             </div>`;
         document.getElementById('chat-pdfs-container').style.display = 'none';
-        
-       
         uploadTime = null;
         uploadFileSize = 0;
         isProcessingLargePDF = false;
@@ -387,7 +398,6 @@ async function deleteSingleChat(chatId, event) {
         setTimeout(() => loadChats(true), 2000);
     }
 }
-
 async function deleteHistory() {
     if (!confirm('Delete ALL chats? This will also delete associated PDFs.')) return;
     
@@ -403,13 +413,10 @@ async function deleteHistory() {
     localStorage.setItem('pdfDatabase', JSON.stringify(pdfDatabase));
     currentChatId = null;
     localStorage.removeItem("chat_id");
-    
-    
     uploadTime = null;
     uploadFileSize = 0;
     isProcessingLargePDF = false;
     processingStartTime = null;
-    
     chatsCache = null;
     
     try {
@@ -420,17 +427,12 @@ async function deleteHistory() {
         setTimeout(() => loadChats(true), 2000);
     }
 }
-
-
 let statusCheckInterval = null;
-
 
 async function uploadPDFs() {
     const files = document.getElementById("pdf-files").files;
     const status = document.getElementById("uploadStatus");
     document.getElementById("question-input").disabled = true;
-
-  
     let totalSize = 0;
     for (let file of files) {
         totalSize += file.size;
@@ -444,8 +446,6 @@ async function uploadPDFs() {
         alert("Please select PDF files first.");
         return;
     }
-
-   
     if (!currentChatId) {
         try {
             const chatRes = await apiFetch(`${API_BASE}/chats`, { method: "POST" });
@@ -484,14 +484,20 @@ async function uploadPDFs() {
         const res = await apiFetch(url, {
             method: "POST", body: formData
         });
-
-        const data = await res.json();
+                const data = await res.json();
         if (res.ok) {
             currentChatId = data.chat_id;
             localStorage.setItem("chat_id", currentChatId);
             
             if (!pdfDatabase[currentChatId]) pdfDatabase[currentChatId] = [];
+            
+            // 🔥 ONLY ADD SUCCESSFULLY UPLOADED FILES TO DATABASE
+            // Note: Backend ne sirf successful files ke liye PDF save kiya hai
+            // Isliye hum files array ko filter nahi kar rahe, backend pehle hi skip kar chuka hai
+            
             for (let file of files) {
+                // Check if file was not skipped (backend handles this)
+                // Simple approach: add all files, backend will handle duplicates
                 pdfDatabase[currentChatId].push({
                     name: file.name,
                     uploadedAt: new Date().toISOString()
@@ -499,11 +505,42 @@ async function uploadPDFs() {
             }
             localStorage.setItem('pdfDatabase', JSON.stringify(pdfDatabase));
 
-            const pdfCount = files.length;
+            // 🔥 USE data.uploaded_files (backend se aayega)
+            const pdfCount = data.uploaded_files || files.length;
             const pdfText = pdfCount === 1 ? 'PDF' : 'PDFs';
             
-          
+            // 🔥 SHOW UPLOAD SUCCESS MESSAGE
             showUploadMessage(`✅ **${pdfCount} ${pdfText} uploaded successfully!**`);
+            
+            // 🔥 NEW: SHOW SKIPPED FILES MESSAGE (AGAR KOI SKIP HUI HAI TO)
+            if (data.skipped_files && data.skipped_files.length > 0) {
+                let skipMessage = `⚠️ **${data.skipped_files.length} file(s) skipped due to size limit (${data.skipped_files[0].limit} MB max):**\n\n`;
+                data.skipped_files.forEach(f => {
+                    skipMessage += `• 📄 ${f.name} (${f.size} MB)\n`;
+                });
+                skipMessage += `\n_Only files within ${data.skipped_files[0].limit} MB are processed._\n\n💡 **Tip:** Please compress or split large PDF files.`;
+                addChatMessage("bot", skipMessage);
+            }
+            
+        // const data = await res.json();
+        // if (res.ok) {
+        //     currentChatId = data.chat_id;
+        //     localStorage.setItem("chat_id", currentChatId);
+            
+        //     if (!pdfDatabase[currentChatId]) pdfDatabase[currentChatId] = [];
+        //     for (let file of files) {
+        //         pdfDatabase[currentChatId].push({
+        //             name: file.name,
+        //             uploadedAt: new Date().toISOString()
+        //         });
+        //     }
+        //     localStorage.setItem('pdfDatabase', JSON.stringify(pdfDatabase));
+
+        //     const pdfCount = files.length;
+        //     const pdfText = pdfCount === 1 ? 'PDF' : 'PDFs';
+            
+          
+        //     showUploadMessage(`✅ **${pdfCount} ${pdfText} uploaded successfully!**`);
             
             const processingHTML = `
                 <div id="processing-message" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 20px 24px; border-radius: 16px; margin: 10px 0; box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.4); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(8px);">
@@ -552,6 +589,7 @@ async function uploadPDFs() {
             status.innerHTML = "✅ Upload complete!";
             setTimeout(() => status.style.display = "none", 3000);
 
+            await loadChatPDFs(currentChatId);
             displayChatPDFs();
             
             chatsCache = null;

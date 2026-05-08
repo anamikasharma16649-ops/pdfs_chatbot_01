@@ -1,8 +1,34 @@
-def insert_pdf(supabase, user_id, filename):
-    return supabase.table("pdfs").insert({
-        "user_id": user_id, 
-        "filename": filename
-    }).execute()
+# def insert_pdf(supabase, user_id, filename):
+#     return supabase.table("pdfs").insert({
+#         "user_id": user_id, 
+#         "filename": filename
+#     }).execute()
+
+from datetime import datetime
+
+def insert_pdf(supabase, user_id, filename, chat_id=None):
+    """Insert PDF record into database"""
+    try:
+        data = {
+            "user_id": user_id,
+            "filename": filename,
+            "upload_date": datetime.now().isoformat()
+        }
+        
+        # chat_id bhi save karo agar diya gaya hai
+        if chat_id:
+            data["chat_id"] = chat_id
+            
+        print(f"📝 Saving PDF to DB: {data}")
+        
+        result = supabase.table("pdfs").insert(data).execute()
+        
+        print(f"✅ PDF saved: {result.data}")
+        return result.data[0] if result.data else None
+        
+    except Exception as e:
+        print(f"❌ Failed to insert PDF: {e}")
+        return None
 
 def get_pdfs(supabase):
     return (
@@ -16,7 +42,6 @@ def create_chat(supabase, user_id):
     import time
     from datetime import datetime, timedelta
     
-
     ten_seconds_ago = (datetime.now() - timedelta(seconds=10)).isoformat()
     
     recent_chats = supabase.table("chats") \
@@ -26,12 +51,10 @@ def create_chat(supabase, user_id):
         .order("created_at", desc=True) \
         .execute()
     
-
     if recent_chats.data and len(recent_chats.data) > 0:
         print(f"⚠️ Returning existing chat {recent_chats.data[0]['id']} (created in last 10s)")
         return recent_chats.data[0]
     
-
     current_time = datetime.now().isoformat()
     res = supabase.table("chats").insert({
         "user_id": user_id,
@@ -44,7 +67,6 @@ def create_chat(supabase, user_id):
     print(f"✅ New chat created: {res.data[0]['id']}")
     return res.data[0]
   
-
 def set_chat_title(supabase, chat_id, title):
     return supabase.table("chats").update({
         "title": title
