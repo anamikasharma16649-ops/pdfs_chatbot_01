@@ -267,51 +267,9 @@ async def upload_multiple_pdfs(
     print("UPLOAD CHAT ID:", final_chat_id)
     print("========================")
 
-    # uploaded_count = 0
-
-    # for file in files:
-    #     if file.content_type != "application/pdf":
-    #         continue
-    #     if not file.filename.lower().endswith(".pdf"):
-    #         continue
-
-    #     uploaded_count += 1
-
-    #     user_upload_dir = os.path.join(UPLOAD_DIR, f"user_{user['id']}")
-    #     os.makedirs(user_upload_dir, exist_ok=True)
-
-    #     file_path = os.path.join(
-    #         user_upload_dir,
-    #         f"{int(time.time())}_{file.filename}"
-    #     )
-
-    #     with open(file_path, "wb") as f:
-    #         while chunk := await file.read(1024 * 1024):
-    #             f.write(chunk)
-
-    #     if os.path.getsize(file_path) / (1024 * 1024) > MAX_FILE_SIZE_MB:
-    #         continue
-
-    #     background_tasks.add_task(
-    #         process_pdf_background,
-    #             file_path,
-    #             file.filename,
-    #             user["id"],
-    #             user["access_token"],
-    #             final_chat_id
-    #     )
-       
-    # if uploaded_count == 0:
-    #     raise HTTPException(status_code=400, detail="No valid PDFs uploaded")
-
-    # return {
-    #     "message": "Uploading started",
-    #     "uploaded_files": uploaded_count,
-    #     "chat_id": final_chat_id,
-    #     "status": "processing"
-    # }
+    
     uploaded_count = 0
-    skipped_files = []  # 🔥 NAYA: Skipped files ka list
+    skipped_files = []  
 
     for file in files:
         if file.content_type != "application/pdf":
@@ -356,7 +314,7 @@ async def upload_multiple_pdfs(
     if uploaded_count == 0:
         raise HTTPException(status_code=400, detail="No valid PDFs uploaded")
 
-    # 🔥 RETURN SKIPPED FILES INFO
+
     return {
         "message": "Uploading started",
         "uploaded_files": uploaded_count - len(skipped_files),
