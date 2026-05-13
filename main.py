@@ -318,7 +318,7 @@ async def upload_multiple_pdfs(
     return {
         "message": "Uploading started",
         "uploaded_files": uploaded_count - len(skipped_files),
-        "skipped_files": skipped_files,  # 🔥 NAYA: Skipped files ka list
+        "skipped_files": skipped_files,  
         "chat_id": final_chat_id,
         "status": "processing"
     }
@@ -394,7 +394,7 @@ def estimate_remaining_time(status):
 
 
 
-        ######
+        
 @app.get("/chats/{chat_id}/pdfs")
 def get_chat_pdfs(chat_id: str, user = Depends(get_current_user)):
     """Get all PDFs for a specific chat"""
